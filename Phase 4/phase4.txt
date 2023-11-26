@@ -1,0 +1,19 @@
+Phase 4: One-to-One Chatting and Protocol Optimization
+
+1. Objective: Enhance the application by enabling one-to-one chatting and optimizing
+communication protocols for better performance.
+
+2. Deliverables:
+
+• Implement one-to-one chat functionality.
+• Optimize TCP and UDP usage based on different scenarios.
+• Conduct performance testing and document results.
+• Finalize the user interface and overall user experience.
+
+Steps:
+
+• Implement one-to-one chat functionality between users.
+• Optimize communication protocols based on different scenarios (e.g., TCP for reliability,
+UDP for real-time interactions).
+• Conduct performance testing to evaluate the scalability of the system.
+• Finalize the user interface, considering usability and user experience.

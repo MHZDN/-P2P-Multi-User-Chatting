@@ -1,0 +1,15 @@
+Phase 2: Basic Client-Server Setup
+
+1. Objective: Implement the foundational elements of the system, including basic client-server
+communication using Python and sockets.
+
+2. Deliverables:
+• Basic client and server applications.
+• Establish a TCP connection for user authentication.
+
+Steps:
+
+• Implement a basic server application capable of handling multiple client connections.
+• Establish a TCP connection for user authentication.
+• Develop a basic client application for users to connect to the server.
+• Implement a simple command-line interface for user interaction.
