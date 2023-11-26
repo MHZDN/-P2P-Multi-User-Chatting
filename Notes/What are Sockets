@@ -1,0 +1,21 @@
+Sockets are a programming interface that allows communication between two computers a network. They provide a way for applications to send and receive data across different machines or processes.
+
+In the context of network programming, a socket is an endpoint for sending or receiving data. It represents a connection between two devices, typically a client and a server, but it can also be used for peer-to-peer communication.
+
+Sockets use the Internet Protocol (IP) and Transmission Control Protocol (TCP) or User Datagram Protocol (UDP) to establish connections and exchange data. TCP provides reliable, ordered, and error-checked delivery of data, while UDP offers faster but less reliable transmission.
+
+Here are some key concepts related to sockets:
+
+Socket Address: A socket address consists of an IP address and a port number. It uniquely identifies a socket on a network.
+
+Server Socket: A server socket listens for incoming connections from clients. It waits for clients to connect and then establishes a connection with them.
+
+Client Socket: A client socket initiates a connection to a server socket. It sends requests to the server and receives responses.
+
+Socket API: The Socket Application Programming Interface (API) provides functions and methods that allow developers to create, configure, connect, send, and receive data through sockets. Different programming languages provide their own socket APIs.
+
+TCP Sockets: TCP sockets provide reliable, stream-oriented communication between two devices. They ensure that data is delivered in the correct order without loss or duplication.
+
+UDP Sockets: UDP sockets provide datagram-oriented communication between devices. They are faster than TCP sockets but do not guarantee reliable delivery or ordering of data.
+
+Sockets are widely used in various network applications such as web browsing, email clients, chat applications, file transfer protocols, and more. They enable communication between different devices or processes over networks, allowing data to be transmitted efficiently and reliably.
