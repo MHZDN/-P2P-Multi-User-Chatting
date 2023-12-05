@@ -1,0 +1,32 @@
+Title:[Login,Registration]						STATUS:101 					STATUS:100
+Connection:TCP								Connection:TCP					Connection:TCP			
+send From:[IP address,PortNo] 						send From:[IP address,PortNo] 			send From:[IP address,PortNo]
+Send to:[Server IP address, PORT_NO]					Send to:[Server IP address, PORT_NO]		Send to:[Server IP address, PORT_NO]
+Data:[Username,Password]						STATUS_PHRASE:[LOGIN_fAILED,USERNAME_TAKEN,	STATUS_PHRASE:[LOGIN_sUCCESSFUL,REGISTRATION_SUCCESSFUL]
+											INVALID_COMMAND]	
+
+
+Title:[ChatRoom]							STATUS:201					STATUS:200							
+Connection:TCP								Connection:TCP					Connection:TCP
+send From:[IP address,Port_No] 						send From:[IP address,Port_No]			send From:[IP address,Port_No]
+Send to:[IP address, PORT_NO]						Send to:[IP address, PORT_NO]			Send to:[IP address, PORT_NO]
+Data:[[CREATE,CHATROOM_NAME],[JOIN,CHATROOM_NAME],SEE,QUIT]		STATUS_PHRASE:[CREATION_FAILIURE,JOIN_FALIURE	STATUS_PHRASE:[CREATION_S,JOIN_S,ROOM_LISTED_S,QUIT_S]
+											,NO_AVAILABLE_CHAT_ROOM,
+											INVALID_COMMAND]	
+
+Title:[PRIVATE]								STATUS:301					STATUS:300
+connection:[TCP,UDP]							connection:[TCP,UDP]				connection:[TCP,UDP]		
+send From:[IP address,PortNo] 						send From:[IP address,PortNo]			send From:[IP address,PortNo]
+Send to:[IP address, PORT_NO]						Send to:[IP address, PORT_NO]			Send to:[IP address, PORT_NO]
+Data:[USERNAME]								STATUS_PHRASE:[USERNAME_NOT_FOUND,		STATUS_PHRASE:[PRIVATE SESSION INTIATED]
+											USERNAME_OFFLINE,
+											INVALID_COMMAND]		
+
+
+Title:[MESSAGE]								STATUS:401					STATUS:400
+connection:CONNECTION OF PREVIOUS TITLE					connection:CONNECTION OF PREVIOUS TITLE		connection:CONNECTION OF PREVIOUS TITLE
+send From:[IP address,PortNo] 						send From:[IP address,PortNo]			send From:[IP address,PortNo]					
+Send to:[IP address, PORT_NO]						Send to:[IP address, PORT_NO]			Send to:[IP address, PORT_NO]
+Data:[MESSAGE_CONTENT,FORMATTING:[BOLD,ITALIC,HYPERLINK]]		STATUS_PHRASE:[INVALID_FORMAT,INVALID_COMMAND]	STATUS_PHRASE:[MESSAGE_SENT]
+
+
