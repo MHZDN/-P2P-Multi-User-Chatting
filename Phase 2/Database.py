@@ -1,8 +1,8 @@
 import sqlite3
 import hashlib
 
-connection= sqlite3.connect("DataBase.db")
-cur=connection.cursor()
+connection = sqlite3.connect("DataBase.db")
+cur = connection.cursor()
 
 cur.execute("""
 CREATE TABLE IF NOT EXISTS Client_Data (
