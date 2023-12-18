@@ -2,6 +2,7 @@ import socket
 import threading
 import hashlib
 import sqlite3
+from Database import insert_db
 
 host = '127.0.0.1'  # localhost
 port = 56789
@@ -28,19 +29,16 @@ def Client_authentication(Username,Password):
     
 # ------------------------------------------------------------------------------------------------------------
     
-def Client_Registration(client):
+def Client_Registration(client,Username):
     client.send("Please Enter a Strong PassWord".encode())
     New_Password = client.recv(1024).decode()
     New_Password=is_strong(client,New_Password)
-
+    insert_db(Username,New_Password)
     client.send("Congrats a new Account has been created".encode())
     client.send("Choose Your Command again".encode())
     respond= client.recv(1024).decode()
     return respond
-
-# ------------------------------------------------------------------------------------------------------------
-def add_new_user():
-    pass
+ 
 # ------------------------------------------------------------------------------------------------------------
 def is_unique(UserName):
 
@@ -97,7 +95,7 @@ def Login_or_register(client):
             if status:
                 client.send("This Username Has been Taken.".encode())
             else:
-              respond= Client_Registration(client)
+              respond= Client_Registration(client,unique_username)
 
 
         elif respond.lower() == "close!":

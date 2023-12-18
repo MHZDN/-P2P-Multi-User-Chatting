@@ -10,12 +10,17 @@ CREATE TABLE IF NOT EXISTS Client_Data (
             PASSSWORD VARCHAR(255) NOT NULL
 )
 """)
-def insert(username,password):
-    cur.execute("INSERT into Client_Data (USERNAME , PASSSWORD ) values (?,?)",(username,password))
+def insert_db(username,password):
+    connection= sqlite3.connect("DataBase.db")
+    cur=connection.cursor()
+    cur.execute("INSERT into Client_Data (USERNAME , PASSSWORD ) values (?,?)",(username,hashlib.sha256(password.encode()).hexdigest()))
 
 def Delete_All():
+    connection= sqlite3.connect("DataBase.db")
+    cur=connection.cursor()
     cur.execute("DELETE FROM Client_Data")
-insert("admin",hashlib.sha256("admin".encode()).hexdigest())
+
+# insert_db("admin",hashlib.sha256("admin".encode()).hexdigest())
 # Delete_All()
 # password= hashlib.sha256("admin".encode()).hexdigest()
 
