@@ -15,8 +15,10 @@ def insert(username,password):
 
 def Delete_All():
     cur.execute("DELETE FROM Client_Data")
+
+Delete_All()
 insert("admin",hashlib.sha256("admin".encode()).hexdigest())
-# Delete_All()
+
 # password= hashlib.sha256("admin".encode()).hexdigest()
 
 connection.commit()
