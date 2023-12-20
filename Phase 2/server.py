@@ -2,163 +2,218 @@ import socket
 import threading
 import hashlib
 import sqlite3
-from Database import insert_db
+import colorama
+from colorama import Back,Fore ,Style
 
-host = '127.0.0.1'  # localhost
+colorama.init(autoreset=True)
+
+host = '127.0.0.1'
 port = 56789
 
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Create a TCP socket
-server.bind((host, port))  # Bind the server socket to the specified host and port
-server.listen()  # Start listening for incoming connections
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.bind((host, port))
+server.listen()
 
-clients = []  # List to store connected client sockets
-nicknames = []  # List to store nicknames of connected clients
+clients = {}
+# nicknames = []
+# usernames=[]
+#------------------------------------------------------------------------------------------------------------
+def Client_authentication(Username, Password):
+    conn = sqlite3.connect("DataBase.db")
+    cur = conn.cursor()
 
+    # Hash the provided password before comparing
+    hashed_password = hashlib.sha256(Password.encode()).hexdigest()
 
-# ------------------------------------------------------------------------------------------------------------
-
-def Client_authentication(Username,Password):
-    conn=sqlite3.connect("DataBase.db")
-    cur=conn.cursor()
-
-    cur.execute("SELECT * FROM Client_Data WHERE USERNAME = ? AND PASSSWORD = ? " , (Username,Password))
+    cur.execute("SELECT * FROM Client_Data WHERE USERNAME = ? AND PASSSWORD = ?", (Username, hashed_password))
     if cur.fetchall():
         return True
-    else :
+    else:
         return False
-    
-# ------------------------------------------------------------------------------------------------------------
-    
-def Client_Registration(client,Username):
-    client.send("Please Enter a Strong PassWord".encode())
+#------------------------------------------------------------------------------------------------------------
+
+def Client_Registration(client, unique_username):
+    client.send("Please Enter a Strong Password".encode())
     New_Password = client.recv(1024).decode()
-    New_Password=is_strong(client,New_Password)
-    insert_db(Username,New_Password)
-    client.send("Congrats a new Account has been created".encode())
+    New_Password = is_strong(client, New_Password)
+
+    # Hash the password before storing it in the database
+    hashed_password = hashlib.sha256(New_Password.encode()).hexdigest()
+
+    add_new_user(unique_username, hashed_password)
+    client.send("Congrats, a new Account has been created".encode())
     client.send("Choose Your Command again".encode())
-    respond= client.recv(1024).decode()
+    respond = client.recv(1024).decode()
     return respond
- 
-# ------------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------
+
+def add_new_user(unique_username, hashed_password):
+    connection = sqlite3.connect("DataBase.db")
+    cur = connection.cursor()
+    cur.execute("INSERT INTO Client_Data (USERNAME, PASSSWORD) VALUES (?, ?)", (unique_username, hashed_password))
+    connection.commit()
+#------------------------------------------------------------------------------------------------------------
+
 def is_unique(UserName):
+    conn = sqlite3.connect("DataBase.db")
+    cur = conn.cursor()
 
-    conn=sqlite3.connect("DataBase.db")
-    cur=conn.cursor()
-
-    cur.execute("SELECT * FROM Client_Data WHERE USERNAME = ? " , (UserName,))
+    cur.execute("SELECT * FROM Client_Data WHERE USERNAME = ?", (UserName,))
     if cur.fetchall():
         return True
-    else :
+    else:
         return False
-    
-# ------------------------------------------------------------------------------------------------------------
-    
-def is_strong(client,password):
-    while(len(password)<5) :
+#------------------------------------------------------------------------------------------------------------
+
+def is_strong(client, password):
+    while len(password) < 5:
         client.send("Weak password! Please choose a password with 5 or more characters".encode())
-        password=client.recv(1024).decode()
+        password = client.recv(1024).decode()
     return password
-# ------------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------
+def Show_Menue(client):
+    while True:
+
+        client.send(str(Fore.WHITE+"Welecome To the Local P2P Chatting Application\n").encode())
+        client.send("1- Press [1] To See Online Users\n".encode())
+        client.send("2- Press [2] To create Chat Room\n".encode())
+        client.send("3- Press [3] To Join Chat Room\n".encode())
+        client.send("4- Press [4] To See Avaliable Chating Rooms\n".encode())
+        client.send("5- Press [5] To intiate one-to-one chatting Room\n".encode())
+        client.send("6- Press [6] To Change your Nickname \n".encode())
+        client.send("7- Press [7] To logout\n".encode())
+        client.send("8- Press [8] To Close The application\n".encode())
+
+        Respond = client.recv(1024).decode()
+
+        if Respond == '1':
+            show_Online(client)
+        elif Respond == '2':
+            pass
+        elif Respond == '3':
+            pass
+        elif Respond == '4':
+            pass
+        elif Respond == '5':
+            pass
+        elif Respond == '6':
+            pass
+        elif Respond == '7':
+            pass
+        elif Respond == '8':
+            pass
+
+def show_Online(client):
+    client.send("Online Users:\n".encode())
+    for key in clients:
+        client.send(f"(({clients[key][0]})) AKA '{clients[key][1]}'\n".encode())
+    client.send("\n1-Enter [R] to return to the Menue \n".encode())
+    client.send("\n2-Enter [Close!] to Close the Application \n".encode())
+
+    Respond=client.recv(1024).decode()
+    while True:
+
+        if Respond.lower() == 'r':
+            return
+        elif Respond.lower() == 'Close!':
+            pass
+        else:
+            client.send("Please enter a valid command".encode())
+            Respond=client.recv(1024).decode()
+
+        
+
 
 def Login_or_register(client):
-
-    client.send("Please Enter [login] to login or [Register] if you are New !\n".encode())
-    client.send("Enter [Close!] if You want to leave the chatting application".encode())
+    client.send(str(Fore.WHITE+"Welecome To the Local P2P Chatting Application\n").encode())
+    client.send("1- Enter [login] to login\n".encode())
+    client.send("2- Enter [Register] if You are New!\n".encode())
+    client.send("3- Enter [Close!] if You want to leave the chatting application\n".encode())
     respond = client.recv(1024).decode()
 
     while True:
-
         if respond.lower() == "login":
-
             client.send("Username :".encode())
             Username = client.recv(1024).decode()
             client.send("Password :".encode())
-            Password = client.recv(1024)
-            Password=hashlib.sha256(Password).hexdigest()
+            Password = client.recv(1024).decode()  # Receive the password directly
 
-            status=Client_authentication(Username,Password)
+            status = Client_authentication(Username, Password)
 
             if status:
-                client.send("Login Successful !".encode()) 
-                return
-            else :
+                client.send("Login Successful !".encode())
+                # usernames.append({Username:None})
+                return Username
+            else:
                 client.send("Wrong UserName or Password!".encode())
                 client.send("Choose Your Command again".encode())
                 respond = client.recv(1024).decode()
 
         elif respond.lower() == "register":
-
             client.send("Please enter a Unique Username".encode())
-            unique_username=client.recv(1024).decode()
-            status=is_unique(unique_username)
+            unique_username = client.recv(1024).decode()
+            status = is_unique(unique_username)
 
             if status:
                 client.send("This Username Has been Taken.".encode())
             else:
-              respond= Client_Registration(client,unique_username)
-
+                respond = Client_Registration(client, unique_username)
 
         elif respond.lower() == "close!":
-
             pass
 
-        else: 
-
+        else:
             client.send("Please enter A valid Command !".encode())
             respond = client.recv(1024).decode()
-            
-# ------------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------
 
 def broadcast(message):
-    # Send the provided message to all connected clients
     for client in clients:
         client.send(message)
-
-# ------------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------
 
 def handle(client):
-    # Handle messages from a specific client
     while True:
         try:
-            message = client.recv(1024)  # Receive a message from the client
-            broadcast(message)  # Broadcast the message to all clients
+            message = client.recv(1024)
+            broadcast(message)
 
         except:
-            # If an error occurs, it usually means the client has disconnected
-            index = clients.index(client)
-            clients.remove(client)
-            client.close()
-            nickname = nicknames[index]
-            print(f"Lost connection with {nickname}")
-            broadcast(f'{nickname} is now offline!'.encode())  # Notify other clients about client's departure
-            nicknames.remove(nickname)
-            break
 
-# ------------------------------------------------------------------------------------------------------------
+            print(f"Lost connection with {clients[client][1]}")
+            broadcast(f'{clients[client][1]} is now offline!'.encode())
+           
+            client.close()
+            del clients[client]
+            break
+#------------------------------------------------------------------------------------------------------------
 
 def receive():
-    # Accept new client connections
     while True:
-        client, address = server.accept()  # Accept a new client connection
-        Login_or_register(client)
+        try:
+            client, address = server.accept()
+            Username=Login_or_register(client)
+
+            print(f"Connected with {str(address)}")
+
+            client.send('Choose Your Nickname'.encode('ascii'))
+            nickname = client.recv(1024).decode('ascii')
+            clients[client]=[Username,nickname]
+
+            print(f'Nickname of the client is {nickname}!')
+            broadcast(f'{nickname} is now online!'.encode('ascii'))
+            client.send('Connected to the server!\n'.encode('ascii'))
+
+            Show_Menue(client)
+            thread = threading.Thread(target=handle, args=(client,))
+            thread.start()
+        except:
+            print("un expected error")  #feeh error hena hoa leeeh msh beytba3 el exeption el 3and el handle 
+            continue
+
         
-
-
-        print(f"Connected with {str(address)}")
-
-        client.send('NICK'.encode('ascii'))  # Send a nickname request to the client
-        nickname = client.recv(1024).decode('ascii')  # Receive the nickname from the client
-        nicknames.append(nickname)  # Add the nickname to the list
-        clients.append(client)  # Add the client socket to the list
-
-        print(f'Nickname of the client is {nickname}!')
-        broadcast(f'{nickname} is now online!'.encode('ascii'))  # Notify other clients about client's arrival
-        client.send('Connected to the server!'.encode('ascii'))  # Send a connection confirmation to the client
-
-        thread = threading.Thread(target=handle, args=(client,))  # Create a new thread to handle the client's messages
-        thread.start()
-# ------------------------------------------------------------------------------------------------------------
-
+#------------------------------------------------------------------------------------------------------------
 
 print("Server is listening...")
-receive()  # Start accepting client connections
+
+receive() # maby add while loop for when logging out 

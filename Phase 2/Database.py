@@ -1,8 +1,8 @@
 import sqlite3
 import hashlib
 
-connection= sqlite3.connect("DataBase.db")
-cur=connection.cursor()
+connection = sqlite3.connect("DataBase.db")
+cur = connection.cursor()
 
 cur.execute("""
 CREATE TABLE IF NOT EXISTS Client_Data (
@@ -20,8 +20,9 @@ def Delete_All():
     cur=connection.cursor()
     cur.execute("DELETE FROM Client_Data")
 
-# insert_db("admin",hashlib.sha256("admin".encode()).hexdigest())
-# Delete_All()
+Delete_All()
+insert("admin",hashlib.sha256("admin".encode()).hexdigest())
+
 # password= hashlib.sha256("admin".encode()).hexdigest()
 
 connection.commit()
