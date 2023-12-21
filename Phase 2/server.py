@@ -2,10 +2,10 @@ import socket
 import threading
 import hashlib
 import sqlite3
-import colorama
-from colorama import Back,Fore ,Style
+# import colorama
+# from colorama import Back,Fore ,Style
 
-colorama.init(autoreset=True)
+# colorama.init(autoreset=True)
 
 host = '127.0.0.1'
 port = 56789
@@ -15,8 +15,7 @@ server.bind((host, port))
 server.listen()
 
 clients = {}
-# nicknames = []
-# usernames=[]
+
 #------------------------------------------------------------------------------------------------------------
 def Client_authentication(Username, Password):
     conn = sqlite3.connect("DataBase.db")
@@ -74,7 +73,8 @@ def is_strong(client, password):
 def Show_Menue(client):
     while True:
 
-        client.send(str(Fore.WHITE+"Welecome To the Local P2P Chatting Application\n").encode())
+        # client.send(str(Fore.WHITE+"Welecome To the Local P2P Chatting Application\n").encode())
+        client.send("Welecome To the Local P2P Chatting Application\n".encode())
         client.send("1- Press [1] To See Online Users\n".encode())
         client.send("2- Press [2] To create Chat Room\n".encode())
         client.send("3- Press [3] To Join Chat Room\n".encode())
@@ -102,6 +102,7 @@ def Show_Menue(client):
             pass
         elif Respond == '8':
             pass
+#------------------------------------------------------------------------------------------------------------
 
 def show_Online(client):
     client.send("Online Users:\n".encode())
@@ -122,10 +123,12 @@ def show_Online(client):
             Respond=client.recv(1024).decode()
 
         
+#------------------------------------------------------------------------------------------------------------
 
-
-def Login_or_register(client):
-    client.send(str(Fore.WHITE+"Welecome To the Local P2P Chatting Application\n").encode())
+# !!!!!!!!!! handle same login username 
+def Login_or_register(client): 
+    # client.send(str(Fore.WHITE+"Welecome To the Local P2P Chatting Application\n").encode())
+    client.send("Welecome To the Local P2P Chatting Application\n".encode())
     client.send("1- Enter [login] to login\n".encode())
     client.send("2- Enter [Register] if You are New!\n".encode())
     client.send("3- Enter [Close!] if You want to leave the chatting application\n".encode())
@@ -172,26 +175,25 @@ def broadcast(message):
         client.send(message)
 #------------------------------------------------------------------------------------------------------------
 
-def handle(client):
-    while True:
-        try:
-            message = client.recv(1024)
-            broadcast(message)
+# def handle(client):
+#     while True:
+#         try:
+#             message = client.recv(1024)
+#             broadcast(message)
 
-        except:
+#         except:
 
-            print(f"Lost connection with {clients[client][1]}")
-            broadcast(f'{clients[client][1]} is now offline!'.encode())
+#             print(f"Lost connection with {clients[client][1]}")
+#             broadcast(f'{clients[client][1]} is now offline!'.encode())
            
-            client.close()
-            del clients[client]
-            break
+#             client.close()
+#             del clients[client]
+#             break
 #------------------------------------------------------------------------------------------------------------
 
-def receive():
+def Handle_Client(client,address):
     while True:
         try:
-            client, address = server.accept()
             Username=Login_or_register(client)
 
             print(f"Connected with {str(address)}")
@@ -201,19 +203,29 @@ def receive():
             clients[client]=[Username,nickname]
 
             print(f'Nickname of the client is {nickname}!')
-            broadcast(f'{nickname} is now online!'.encode('ascii'))
+            broadcast(f'{Username} is now online! as "{nickname}"'.encode('ascii')) #e3meli loon le username , we loon lel nickname 
             client.send('Connected to the server!\n'.encode('ascii'))
-
+            
             Show_Menue(client)
-            thread = threading.Thread(target=handle, args=(client,))
-            thread.start()
+            # thread = threading.Thread(target=handle, args=(client,))
+            # thread.start()
         except:
-            print("un expected error")  #feeh error hena hoa leeeh msh beytba3 el exeption el 3and el handle 
-            continue
+            print(f"Lost connection with {str(address)}")
+            # client may get disconnected before saving or appending his data (login) 
+            if client in clients:
+                broadcast(f'{clients[client][0]} is now offline!'.encode())
+                client.close()
+                del clients[client]
+                break
+            else:
+                client.close()
+                break
 
         
 #------------------------------------------------------------------------------------------------------------
-
+       
 print("Server is listening...")
 
-receive() # maby add while loop for when logging out 
+while True:
+    client, address = server.accept()
+    threading.Thread(target=Handle_Client,args=(client,address)).start()

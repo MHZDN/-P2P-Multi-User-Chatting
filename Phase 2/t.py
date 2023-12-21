@@ -1,3 +1,12 @@
-from Database import insert_db
+import threading
+import time
 
-insert_db("aaa","123")
+def show():
+    while True:
+        time.sleep(1)
+        print("....")
+
+input("what is ur name")
+
+threading.Thread(target=show).start()
+
