@@ -95,6 +95,17 @@ def close_app():
     # Client connection terminates.
     client.close()
 #------------------------------------------------------------------------------------------------------------
+def Logout(client):
+    # Broadcast the user's logout to other clients
+    broadcast(f'{clients[client][1]} is now offline!'.encode('ascii'))
+    # Update server log
+    print(f"User {clients[client][0]} logged out.")
+
+    # Remove the client from the clients dictionary
+    del clients[client]
+
+    Login_or_register(client)
+#------------------------------------------------------------------------------------------------------------
 
 def Show_Menue(client):
     while True:
@@ -125,7 +136,7 @@ def Show_Menue(client):
         elif Respond == '6':
             change_nickname(client, clients[client][1])
         elif Respond == '7':
-            pass
+            Logout(client)
         elif Respond == '8':
             close_app()
 #------------------------------------------------------------------------------------------------------------
