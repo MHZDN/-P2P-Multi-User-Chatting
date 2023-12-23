@@ -74,13 +74,26 @@ def is_strong(client, password):
         password = client.recv(1024).decode()
     return password
 #------------------------------------------------------------------------------------------------------------
+def change_nickname(client, nickname):
+    # send a prompt to the client to enter his new nickname
+    client.send("Enter new nickname: ".encode())
+    # received response from the client
+    new_nickname = client.recv(1024).decode()
+    # updated the client's nickname
+    clients[client][1] = new_nickname
+    # printed the new nickname in the server log
+    print(f'Nickname of the client {nickname} is now changed to {new_nickname}!')
+    # notified all clients of the new nickname
+    broadcast(f'{nickname} is now called as "{new_nickname}"'.encode('ascii'))
+    # notified the client that his nickname has been successfully updated
+    client.send(f'Nickname successfully changed to {new_nickname}!\n'.encode('ascii'))
+
+#------------------------------------------------------------------------------------------------------------
 def close_app():
     # if a user enters "close!" the flag 'exit flag' is sent to client-side.
     client.send("exit flag".encode())
     # Client connection terminates.
     client.close()
-
-
 #------------------------------------------------------------------------------------------------------------
 
 def Show_Menue(client):
@@ -110,7 +123,7 @@ def Show_Menue(client):
         elif Respond == '5':
             pass
         elif Respond == '6':
-            pass
+            change_nickname(client, clients[client][1])
         elif Respond == '7':
             pass
         elif Respond == '8':
