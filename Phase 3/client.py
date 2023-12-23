@@ -7,6 +7,11 @@ def receive():
         try:
             # Receive messages from the server, decode them from ASCII
             message = client.recv(1024).decode('ascii')
+
+            if message == 'exit flag':
+                print("Exiting...")
+                break
+
             print(message)
         except:
             # If an error occurs during message reception, print an error message
@@ -15,6 +20,8 @@ def receive():
             # Close the client socket and exit the loop
             client.close()
             break
+    # Close the client socket
+    client.close()
 
 def write():
     while True:

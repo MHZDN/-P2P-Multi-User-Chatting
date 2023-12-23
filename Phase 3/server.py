@@ -45,7 +45,11 @@ def Client_Registration(client, unique_username):
     respond = client.recv(1024).decode()
     return respond
 #------------------------------------------------------------------------------------------------------------
+#def logout(client):
 
+
+
+#------------------------------------------------------------------------------------------------------------
 def add_new_user(unique_username, hashed_password):
     connection = sqlite3.connect("DataBase.db")
     cur = connection.cursor()
@@ -70,16 +74,25 @@ def is_strong(client, password):
         password = client.recv(1024).decode()
     return password
 #------------------------------------------------------------------------------------------------------------
+def close_app():
+    # if a user enters "close!" the flag 'exit flag' is sent to client-side.
+    client.send("exit flag".encode())
+    # Client connection terminates.
+    client.close()
+
+
+#------------------------------------------------------------------------------------------------------------
+
 def Show_Menue(client):
     while True:
 
-        # client.send(str(Fore.WHITE+"Welecome To the Local P2P Chatting Application\n").encode())
-        client.send("Welecome To the Local P2P Chatting Application\n".encode())
+        # client.send(str(Fore.WHITE+"Welcome To the Local P2P Chatting Application\n").encode())
+        client.send("Welcome To the Local P2P Chatting Application\n".encode())
         client.send("1- Press [1] To See Online Users\n".encode())
         client.send("2- Press [2] To create Chat Room\n".encode())
         client.send("3- Press [3] To Join Chat Room\n".encode())
-        client.send("4- Press [4] To See Avaliable Chating Rooms\n".encode())
-        client.send("5- Press [5] To intiate one-to-one chatting Room\n".encode())
+        client.send("4- Press [4] To See Available ChatRooms\n".encode())
+        client.send("5- Press [5] To initiate one-to-one chatting Room\n".encode())
         client.send("6- Press [6] To Change your Nickname \n".encode())
         client.send("7- Press [7] To logout\n".encode())
         client.send("8- Press [8] To Close The application\n".encode())
@@ -101,7 +114,7 @@ def Show_Menue(client):
         elif Respond == '7':
             pass
         elif Respond == '8':
-            pass
+            close_app()
 #------------------------------------------------------------------------------------------------------------
 
 def show_Online(client):
@@ -163,7 +176,7 @@ def Login_or_register(client):
                 respond = Client_Registration(client, unique_username)
 
         elif respond.lower() == "close!":
-            pass
+            close_app()
 
         else:
             client.send("Please enter A valid Command !".encode())
@@ -200,7 +213,7 @@ def Handle_Client(client,address):
 
             client.send('Choose Your Nickname'.encode('ascii'))
             nickname = client.recv(1024).decode('ascii')
-            clients[client]=[Username,nickname]
+            clients[client] = [Username, nickname]
 
             print(f'Nickname of the client is {nickname}!')
             broadcast(f'{Username} is now online! as "{nickname}"'.encode('ascii')) #e3meli loon le username , we loon lel nickname 
