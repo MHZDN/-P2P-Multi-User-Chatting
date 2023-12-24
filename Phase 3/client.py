@@ -7,7 +7,6 @@ def receive():
         try:
             # Receive messages from the server, decode them from ASCII
             message = client.recv(1024).decode('ascii')
-
             if message == 'exit flag':
                 print("Exiting...")
                 break
