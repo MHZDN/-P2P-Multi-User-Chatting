@@ -1,17 +1,21 @@
 import socket
 import threading
 
+peer_clients=[]
 # Function to handle receiving messages from the server
 def receive():
     while True:
         try:
             # Receive messages from the server, decode them from ASCII
             message = client.recv(1024).decode('ascii')
-            if message == 'exit flag':
-                print("Exiting...")
-                break
+            # in case joined chat Room
+            if message!= "successfully joined chat Room":
+                print(message)
+            else:
+                peer_clients = client.recv(1024).decode('ascii') #list of peer clients
+                for c in peer_clients:
+                    c.send("hi".encode())
 
-            print(message)
         except:
             # If an error occurs during message reception, print an error message
             print("An error occurred")
@@ -19,8 +23,6 @@ def receive():
             # Close the client socket and exit the loop
             client.close()
             break
-    # Close the client socket
-    client.close()
 
 def write():
     while True:

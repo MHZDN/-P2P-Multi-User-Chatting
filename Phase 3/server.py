@@ -28,7 +28,12 @@ def Client_authentication(Username, Password):
 
     cur.execute("SELECT * FROM Client_Data WHERE USERNAME = ? AND PASSSWORD = ?", (Username, hashed_password))
     if cur.fetchall():
-        return True
+        # check if the client is not already online and the same user name is signing in
+        for key in clients:
+            if clients[key][0]==Username:
+                return False
+            else:
+                return True
     else:
         return False
 #------------------------------------------------------------------------------------------------------------
@@ -96,24 +101,30 @@ def join_chat_room(client, room_name):
 
     # room is check to already exist.
     if room_name in chat_rooms:
+
+        # from here we send the info about the clients
+        client.send("successfully joined chat Room") #protocol we can change it later on
+        client.send(chat_rooms[room_name])  #send list of clients in chat room  
+        # client.send("All in chat Room") 
         # client is appended to the members list
         chat_rooms[room_name].append(client)
-        client.send(f"Type [/exit] if you want to exit the chat room at any Time!\n".encode())
         client.send(f"Happy Chatting :)\n".encode())
+        client.send(f"Type [/exit] if you want to exit the chat room at any Time!\n".encode())
 
         broadcast_chatroom(client,f"has joined the chat!\n", room_name) #loon a5dar
 
-        while True:
-            chat_message = client.recv(1024).decode()
 
-            if chat_message == '/exit':
-                client.send(f"You exited chatroom: {room_name}".encode())
-                broadcast_chatroom(client,f"has exited the chat room!\n", room_name) #loon a7mar
-                chat_rooms[room_name].remove(client)
-                delete_chatroom(room_name)
-                break
-            else:
-                broadcast_chatroom(client,f"{chat_message}", room_name)
+        # while True:
+        #     chat_message = client.recv(1024).decode()
+
+        #     if chat_message == '/exit':
+        #         client.send(f"You exited chatroom: {room_name}".encode())
+        #         broadcast_chatroom(client,f"has exited the chat room!\n", room_name) #loon a7mar
+        #         chat_rooms[room_name].remove(client)
+        #         delete_chatroom(room_name)
+        #         break
+        #     else:
+        #         broadcast_chatroom(client,f"{chat_message}", room_name)
     else:
         client.send(f"Chat room '{room_name}' does not exist. Create the room or choose another.\n".encode())
 
@@ -131,13 +142,17 @@ def show_available_chat_rooms(client):
         client.send("Enter the name of the Chat Room you want to join or type [/back] to go back: \n".encode())
         room_choice = client.recv(1024).decode()
         while True:
-
+            # user want to go back to menue
             if room_choice == '/back':
                 return
+            
+            # user entered an existing chatroom name 
             elif room_choice in chat_rooms:
                 join_chat_room(client, room_choice)
                 # dont forget that I will return from the "join_chat_room" fucntion if the client exited from the function
                 return
+            
+            # entering invalid command
             else:
                 client.send(f"Invalid chat room choice. OR invalid Command.\n".encode())
                 client.send("Enter the name of the Chat Room you want to join or type [/back] to go back:\n ".encode())
@@ -294,7 +309,7 @@ def Login_or_register(client):
                 # usernames.append({Username:None})
                 return Username
             else:
-                client.send("Wrong UserName or Password!\n".encode())
+                client.send("Wrong UserName or Password! OR The user is already online!\n".encode())
                 client.send("Choose Your Command again\n".encode())
                 respond = client.recv(1024).decode()
 
@@ -355,7 +370,7 @@ def Handle_Client(client,address):
 
             client.send('Choose Your Nickname'.encode('ascii'))
             nickname = client.recv(1024).decode('ascii')
-            clients[client] = [Username, nickname]
+            clients[client] = [Username, nickname,address]
 
             print(f'Nickname of the client is {nickname}!')
             broadcast(f'{Username} is now online! as "{nickname}"'.encode('ascii')) #e3meli loon le username , we loon lel nickname 
