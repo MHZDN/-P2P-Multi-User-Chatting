@@ -3,6 +3,7 @@ import threading
 import hashlib
 import sqlite3
 import sys
+from client import edit_peers
 # import colorama
 # from colorama import Back,Fore ,Style
 
@@ -18,6 +19,11 @@ server.listen()
 chat_rooms = {}
 clients = {}
 
+def update_peers(room_name):
+    while len(chat_rooms[room_name])!=0:
+        client.edit_peers(chat_rooms[room_name])
+
+    client.edit_peers(chat_rooms[room_name]) #send it one last time as an emty list
 #------------------------------------------------------------------------------------------------------------
 def Client_authentication(Username, Password):
     conn = sqlite3.connect("DataBase.db")
@@ -29,11 +35,12 @@ def Client_authentication(Username, Password):
     cur.execute("SELECT * FROM Client_Data WHERE USERNAME = ? AND PASSSWORD = ?", (Username, hashed_password))
     if cur.fetchall():
         # check if the client is not already online and the same user name is signing in
-        for key in clients:
-            if clients[key][0]==Username:
-                return False
-            else:
-                return True
+        # for key in clients:
+        #     if clients[key][0]==Username:
+        #         return False
+        #     else:
+        #         return True
+        return True
     else:
         return False
 #------------------------------------------------------------------------------------------------------------
@@ -101,13 +108,12 @@ def join_chat_room(client, room_name):
 
     # room is check to already exist.
     if room_name in chat_rooms:
-
-        # from here we send the info about the clients
-        client.send("successfully joined chat Room") #protocol we can change it later on
-        client.send(chat_rooms[room_name])  #send list of clients in chat room  
-        # client.send("All in chat Room") 
+        
+        # add client to peers list in the client class
         # client is appended to the members list
         chat_rooms[room_name].append(client)
+        threading.Thread(target=update_peers,args=(room_name)).start()
+        
         client.send(f"Happy Chatting :)\n".encode())
         client.send(f"Type [/exit] if you want to exit the chat room at any Time!\n".encode())
 
@@ -176,7 +182,7 @@ def show_available_chat_rooms(client):
 # Delete a chatroom
 def delete_chatroom(room_name):
     # chatroom is deleted if number of members reaches zero.
-    if room_name in chat_rooms and len(chat_rooms[room_name]) == 0:
+    if (room_name in chat_rooms) and (len(chat_rooms[room_name])) == 0:
         del chat_rooms[room_name]
         print(f"Chat room '{room_name}' has been deleted.")
 # ------------------------------------------------------------------------------------------------------------

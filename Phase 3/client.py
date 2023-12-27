@@ -6,16 +6,14 @@ peer_clients=[]
 def receive():
     while True:
         try:
+            
             # Receive messages from the server, decode them from ASCII
             message = client.recv(1024).decode('ascii')
-            # in case joined chat Room
-            if message!= "successfully joined chat Room":
-                print(message)
-            else:
-                peer_clients = client.recv(1024).decode('ascii') #list of peer clients
+            print(message)
+            if len(peer_clients)!=0:
                 for c in peer_clients:
-                    c.send("hi".encode())
-
+                    c.send("hi all".encode())
+            
         except:
             # If an error occurs during message reception, print an error message
             print("An error occurred")
@@ -28,6 +26,13 @@ def write():
     while True:
         message = f"{input('')}"
         client.send(message.encode('ascii'))
+def receive_ChatRoom():
+    pass
+def write_ChatRoom():
+    pass
+def edit_peers(peer):
+    if type(peer)==list:
+        peer_clients=peer
 
 try:
     # Create a socket object

@@ -6,7 +6,10 @@ def show():
         time.sleep(1)
         print("....")
 
-input("what is ur name")
+def t():
+    threading.Thread(target=show).start()
+    print("what is ur name")
+    time.sleep(4)
+    return
 
-threading.Thread(target=show).start()
-
+t()
