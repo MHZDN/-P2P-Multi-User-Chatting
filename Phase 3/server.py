@@ -3,6 +3,7 @@ import threading
 import hashlib
 import sqlite3
 import sys
+from Database import Client_authentication,Client_Registration,is_unique
 # import colorama
 # from colorama import Back,Fore ,Style
 
@@ -18,41 +19,7 @@ server.listen()
 chat_rooms = {}
 clients = {}
 
-#------------------------------------------------------------------------------------------------------------
-def Client_authentication(Username, Password):
-    conn = sqlite3.connect("DataBase.db")
-    cur = conn.cursor()
 
-    # Hash the provided password before comparing
-    hashed_password = hashlib.sha256(Password.encode()).hexdigest()
-
-    cur.execute("SELECT * FROM Client_Data WHERE USERNAME = ? AND PASSSWORD = ?", (Username, hashed_password))
-    if cur.fetchall():
-        return True
-    else:
-        return False
-#------------------------------------------------------------------------------------------------------------
-
-def Client_Registration(client, unique_username):
-    client.send("Please Enter a Strong Password".encode())
-    New_Password = client.recv(1024).decode()
-    New_Password = is_strong(client, New_Password)
-
-    # Hash the password before storing it in the database
-    hashed_password = hashlib.sha256(New_Password.encode()).hexdigest()
-
-    add_new_user(unique_username, hashed_password)
-    client.send("Congrats, a new Account has been created".encode())
-    client.send("Choose Your Command again".encode())
-    respond = client.recv(1024).decode()
-    return respond
-#------------------------------------------------------------------------------------------------------------
-def add_new_user(unique_username, hashed_password):
-    connection = sqlite3.connect("DataBase.db")
-    cur = connection.cursor()
-    cur.execute("INSERT INTO Client_Data (USERNAME, PASSSWORD) VALUES (?, ?)", (unique_username, hashed_password))
-    connection.commit()
-#------------------------------------------------------------------------------------------------------------
 def create_chat_room(client):
     # send client a prompt to enter name of new chat room
     client.send("Enter the name of the new chat room:\n ".encode())
@@ -76,9 +43,8 @@ def create_chat_room(client):
                 broadcast_chatroom(client,f"exited the chat room!\n", room_name)
                 # remove client from the list after he exits the chat room.
                 chat_rooms[room_name].remove(client)
-                
-                if len(chat_rooms[room_name].values) == 0:
-                    delete_chatroom(room_name)
+
+                delete_chatroom(room_name)
                 break
             else:
                 broadcast_chatroom(client,f"{chat_message}", room_name)
@@ -166,21 +132,9 @@ def delete_chatroom(room_name):
         print(f"Chat room '{room_name}' has been deleted.")
 # ------------------------------------------------------------------------------------------------------------
 
-def is_unique(UserName):
-    conn = sqlite3.connect("DataBase.db")
-    cur = conn.cursor()
 
-    cur.execute("SELECT * FROM Client_Data WHERE USERNAME = ?", (UserName,))
-    if cur.fetchall():
-        return True
-    else:
-        return False
 #------------------------------------------------------------------------------------------------------------
-def is_strong(client, password):
-    while len(password) < 5:
-        client.send("Weak password! Please choose a password with 5 or more characters\n".encode())
-        password = client.recv(1024).decode()
-    return password
+
 #------------------------------------------------------------------------------------------------------------
 def change_nickname(client, nickname):
     # send a prompt to the client to enter his new nickname
@@ -192,9 +146,10 @@ def change_nickname(client, nickname):
     # printed the new nickname in the server log
     print(f'Nickname of the client {nickname} is now changed to {new_nickname}!\n')
     # notified all clients of the new nickname
-    broadcast(f'{nickname} is now called as "{new_nickname}"\n'.encode('ascii'))
+    broadcast(f'[{nickname}] is now called as "{new_nickname}"\n'.encode('ascii'))
     # notified the client that his nickname has been successfully updated
     client.send(f'Nickname successfully changed to {new_nickname}!\n'.encode('ascii'))
+    return
 
 #------------------------------------------------------------------------------------------------------------
 def close_app():  #!!!!!!!! add if statement to to remove if existed client in list
@@ -213,7 +168,7 @@ def Logout(client):
     # Remove the client from the clients dictionary
     del clients[client]
 
-    Login_or_register(client)
+    # Login_or_register(client) #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #------------------------------------------------------------------------------------------------------------
 
 def Show_Menue(client):
@@ -246,6 +201,7 @@ def Show_Menue(client):
             change_nickname(client, clients[client][1])
         elif Respond == '7':
             Logout(client)
+            break
         elif Respond == '8':
             close_app()
 #------------------------------------------------------------------------------------------------------------

@@ -22,10 +22,13 @@ def receive():
     # Close the client socket
     client.close()
 
+#------------------------------------------------------------------------------------------------------------
+
 def write():
     while True:
         message = f"{input('')}"
         client.send(message.encode('ascii'))
+#------------------------------------------------------------------------------------------------------------
 
 try:
     # Create a socket object
