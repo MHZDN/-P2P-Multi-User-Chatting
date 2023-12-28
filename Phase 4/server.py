@@ -52,8 +52,44 @@ def create_chat_room(client):
         client.send(f"Chat room '{room_name}' already exists. Choose a different name.\n".encode())
 
 
+def one_to_one_chatting(client,client2):
+    pass
+#------------------------------------------------------------------------------------------------------------#
+def one_to_one_request(client):
+    while True:
+        client.send("Please enter a Username of an online cleint You want to chat with or '/exit' to return to menue\n".encode())
+        respond=client.recv(1024).decode()
+        username=""
+        # check if this username exists in the database or not
+        does_exist= is_unique(respond)
+        if does_exist:
+            flag=False
+            for key in clients:
+                if clients[key][0]==respond:
+                    username=clients[key][0]
+                    client2=key
+                    client.send(f"Waiting for [{username}'s] Response...\n".encode())
+                    key.send(f"CHAT REQUEST 1-TO-1! FROM [{clients[client][0]}]\n".encode())
+                    key.send(f"TYPE [ACCEPT] TO ACCEPT REQUEST OR [DENIE] TO DENIE REQUEST !\n".encode())
+                    respond=key.recv(1024).decode()
+                    flag=True
+                    break
+            if respond.lower() =="accept" and flag:
+                one_to_one_chatting(client,client2)
+                return
+            elif respond.lower() =="denie" and flag:
+                client.send(f"[{username}] has denied the chat request!\n".encode())
+            else:
+                client.send("This username is currently offline\n".encode())
+        elif respond=="/exit":
+            return
+        else:
+             client.send("This username does not exist\n".encode())
+         
 
-#------------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------#
+    
+
 def join_chat_room(client, room_name):
     # if no room name is passed as an argument the user is asked to provide the room name.
     if room_name == '':
@@ -176,7 +212,7 @@ def Show_Menue(client):
     while True:
 
         # client.send(str(Fore.WHITE+"Welcome To the Local P2P Chatting Application\n").encode())
-        client.send("Welcome To the Local P2P Chatting Application\n".encode())
+        client.send(f"Welcome '{clients[client][1]}'To the Local P2P Chatting Application\n".encode())
         client.send("1- Press [1] To See Online Users\n".encode())
         client.send("2- Press [2] To create Chat Room\n".encode())
         client.send("3- Press [3] To Join Chat Room\n".encode())
@@ -184,7 +220,7 @@ def Show_Menue(client):
         client.send("5- Press [5] To initiate one-to-one chatting Room\n".encode())
         client.send("6- Press [6] To Change your Nickname \n".encode())
         client.send("7- Press [7] To logout\n".encode())
-        client.send("8- Type [/close!] To Close The application\n".encode())
+        client.send("8- Type [/close!] at any time To Close The application\n".encode())
 
         Respond = client.recv(1024).decode()
 
@@ -197,12 +233,14 @@ def Show_Menue(client):
         elif Respond == '4':
             show_available_chat_rooms(client)
         elif Respond == '5':
-            pass
+            one_to_one_request(client)
         elif Respond == '6':
             change_nickname(client, clients[client][1])
         elif Respond == '7':
             Logout(client)
             break
+        else:
+            client.send("Invalid command Please enter a valid command\n".encode())
 #------------------------------------------------------------------------------------------------------------
 
 def show_Online(client):

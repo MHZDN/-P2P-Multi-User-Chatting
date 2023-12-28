@@ -1,0 +1,16 @@
+Phase 3: Peer-to-Peer Architecture and Chat Rooms
+
+1. Objective: Integrate peer-to-peer architecture and implement the ability to create chat
+rooms.
+
+2. Deliverables:
+
+• Modified server to support peer-to-peer connections.
+• Implement chat room creation and joining functionalities.
+• Demonstrate basic text-based communication within chat rooms.
+Steps:
+
+• Modify the server to support peer-to-peer connections.
+• Enable users to create and join chat rooms.
+• Implement a messaging system within chat rooms using TCP.
+• Handle dynamic changes in the chat room, such as user joins and leaves.
