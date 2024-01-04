@@ -4,6 +4,7 @@ import hashlib
 import sqlite3
 import sys
 from Database import Client_authentication,Client_Registration,is_unique
+import time
 # import colorama
 # from colorama import Back,Fore ,Style
 
@@ -18,6 +19,7 @@ server.listen()
 
 chat_rooms = {}
 clients = {}
+one_to_one={}
 
 
 def create_chat_room(client):
@@ -51,36 +53,73 @@ def create_chat_room(client):
     else:
         client.send(f"Chat room '{room_name}' already exists. Choose a different name.\n".encode())
 
+def is_online(client,respond):
+    flag=False
+    username=None
+    client2=None
+    for key in clients:
 
-def one_to_one_chatting(client,client2):
-    pass
+        if clients[key][0]==respond:
+            flag=True
+            username=clients[key][0]
+            client2=key
+            one_to_one[client]=client2
+            client.send(f"Waiting for [{username}'s] to enter 1-to-1 chatting room...\n".encode())
+            client2.send(f"CHAT REQUEST 1-TO-1! FROM [{clients[client][0]}]\n".encode())
+            client2.send(f"GO to menue and choose one-to-one chat to chat with him\n".encode())
+            client2.send(f"You have 10 seconds to respond otherwise you will not catch him\n".encode())
+            return username , flag , client2 
+        
+    return username,flag,client2
+
+
+#------------------------------------------------------------------------------------------------------------#
+def one_2_one_chat(client,client2):
+    client.send(f"--------one-to-one intiated with [{clients[client2][0]}]--------\n".encode())
+    while True and (client in one_to_one) and (client2 in one_to_one):
+        chat_message = client.recv(1024).decode()
+        if chat_message=='/exit':
+            client2.send(f"{clients[client][0]} Has left the chat!\n".encode())
+            client2.send("press any key to return to menue\n".encode())
+            if (client2 in one_to_one) and (client in one_to_one):
+                del one_to_one[client]
+                del one_to_one[client2]
+            return
+        else:
+            client2.send(f"{clients[client][0]}:{chat_message}".encode())    
+
 #------------------------------------------------------------------------------------------------------------#
 def one_to_one_request(client):
     while True:
-        client.send("Please enter a Username of an online cleint You want to chat with or '/exit' to return to menue\n".encode())
+        client.send("Please enter a Username of an online client You want to chat with or '/exit' to return to menue\n".encode())
         respond=client.recv(1024).decode()
-        username=""
+
         # check if this username exists in the database or not
         does_exist= is_unique(respond)
+        # user is in the database 
         if does_exist:
-            flag=False
-            for key in clients:
-                if clients[key][0]==respond:
-                    username=clients[key][0]
-                    client2=key
-                    client.send(f"Waiting for [{username}'s] Response...\n".encode())
-                    key.send(f"CHAT REQUEST 1-TO-1! FROM [{clients[client][0]}]\n".encode())
-                    key.send(f"TYPE [ACCEPT] TO ACCEPT REQUEST OR [DENIE] TO DENIE REQUEST !\n".encode())
-                    respond=key.recv(1024).decode()
-                    flag=True
-                    break
-            if respond.lower() =="accept" and flag:
-                one_to_one_chatting(client,client2)
-                return
-            elif respond.lower() =="denie" and flag:
-                client.send(f"[{username}] has denied the chat request!\n".encode())
+
+            username,flag,client2 = is_online(client,respond)
+            # user is not online 
+            if flag==False:
+                client.send("user is not online!\n".encode())
+                continue
+            # user is online 
             else:
-                client.send("This username is currently offline\n".encode())
+                count=10
+                client.send("Remaing Time:\n".encode())
+                while count:
+                    client.send(f"{count}\t".encode())
+                    count=count-1
+                    time.sleep(1)
+                    if ((one_to_one[client]==client2 )and (client2 in one_to_one)):
+                        if one_to_one[client2]==client:
+                            one_2_one_chat(client,client2)
+                            return   
+                if count==0:
+                    client.send("invitation has expired!\n".encode())
+                    del one_to_one[client]
+
         elif respond=="/exit":
             return
         else:
