@@ -261,9 +261,6 @@ def delete_chatroom(room_name):
 
 
 # ------------------------------------------------------------------------------------------------------------
-
-
-# ------------------------------------------------------------------------------------------------------------
 def change_nickname(client, nickname):
     # send a prompt to the client to enter his new nickname
     message = Fore.YELLOW + "Enter new nickname: \n" + Style.RESET_ALL
@@ -282,8 +279,6 @@ def change_nickname(client, nickname):
     message = "Nickname successfully changed to " + Fore.YELLOW + f'{new_nickname}' + Style.RESET_ALL + " !\n"
     client.send(message.encode('ascii'))
     return
-
-
 # ------------------------------------------------------------------------------------------------------------
 # def close_app():  #!!!!!!!! add if statement to to remove if existed client in list
 #     # if a user enters "close!" the flag 'exit flag' is sent to client-side.
@@ -305,10 +300,7 @@ def Logout(client):
 
     # Remove the client from the clients dictionary
     del clients[client]
-
-
 # ------------------------------------------------------------------------------------------------------------
-
 def Show_Menue(client):
     while True:
 
@@ -350,10 +342,7 @@ def Show_Menue(client):
             break
         else:
             client.send("Invalid command Please enter a valid command\n".encode())
-
-
 # ------------------------------------------------------------------------------------------------------------
-
 def show_Online(client):
     client.send("Online Users:\n".encode())
     for key in clients:
@@ -376,9 +365,7 @@ def show_Online(client):
             client.send(message.encode())
             Respond = client.recv(1024).decode()
 
-
 # ------------------------------------------------------------------------------------------------------------
-
 # !!!!!!!!!! handle same login username
 def Login_or_register(client):
     # client.send(str(Fore.WHITE+"Welcome To the Local P2P Chatting Application\n").encode())
@@ -396,6 +383,13 @@ def Login_or_register(client):
             message = Fore.YELLOW + "Username :" + Style.RESET_ALL
             client.send(message.encode())
             Username = client.recv(1024).decode()
+
+            # Check if the username is already logged in
+            if any(Username == clients[c][0] for c in clients):
+                message = Fore.RED + "This user is already logged in. Choose a different command or username.\n" + Style.RESET_ALL
+                client.send(message.encode())
+                continue
+
             message = Fore.YELLOW + "Password :" + Style.RESET_ALL
             client.send(message.encode())
             Password = client.recv(1024).decode()  # Receive the password directly
@@ -433,9 +427,7 @@ def Login_or_register(client):
             client.send(message.encode())
             respond = client.recv(1024).decode()
 
-
 # ------------------------------------------------------------------------------------------------------------
-
 def broadcast(message):
     # Create a list of clients to remove
     to_remove = []
@@ -452,8 +444,6 @@ def broadcast(message):
     # Remove disconnected clients from the clients dictionary
     for client in to_remove:
         del clients[client]
-
-
 # ------------------------------------------------------------------------------------------------------------
 # Broadcasts a message to all members of a specific chat room.
 def broadcast_chatroom(client, message, room_name):
@@ -464,10 +454,7 @@ def broadcast_chatroom(client, message, room_name):
             else:
                 message_c = Fore.CYAN + f"{clients[client][1]}" + Style.RESET_ALL + f": {message}"
                 c.send(message_c.encode())
-
-
 # ------------------------------------------------------------------------------------------------------------
-
 # def handle(client):
 #     while True:
 #         try:
