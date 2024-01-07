@@ -3,13 +3,14 @@ import threading
 import hashlib
 import sqlite3
 import sys
-from Database import Client_authentication,Client_Registration,is_unique
+
+import colorama
+
+from Database import Client_authentication, Client_Registration, is_unique
 import time
-# import colorama
-# from colorama import Back,Fore ,Style
+from colorama import Fore, Style, init
 
-# colorama.init(autoreset=True)
-
+init(convert=True)
 host = '127.0.0.1'
 port = 56789
 
@@ -42,18 +43,19 @@ def create_chat_room(client):
             # if received message is the exist flag, user will exit the chatroom and will be removed from the chat room.
             if chat_message == '/exit':
                 client.send(f"You exited chatroom: {room_name}".encode())
-                broadcast_chatroom(client,f"exited the chat room!\n", room_name)
+                broadcast_chatroom(client, f"exited the chat room!\n", room_name)
                 # remove client from the list after he exits the chat room.
                 chat_rooms[room_name].remove(client)
 
                 delete_chatroom(room_name)
                 break
             else:
-                broadcast_chatroom(client,f"{chat_message}", room_name)
+                broadcast_chatroom(client, f"{chat_message}", room_name)
     else:
         client.send(f"Chat room '{room_name}' already exists. Choose a different name.\n".encode())
 
-def is_online(client,respond):
+
+def is_online(client, respond):
     flag = False
     username = None
     client2 = None
@@ -69,13 +71,24 @@ def is_online(client,respond):
             client2.send(f"GO to menue and choose one-to-one chat to chat with him\n".encode())
             client2.send(f"You have 30 seconds to respond otherwise you will not catch him\n".encode())
             return username, flag, client2
-        
+
     return username, flag, client2
 
 
-#------------------------------------------------------------------------------------------------------------#
+# ------------------------------------------------------------------------------------------------------------#
 def one_2_one_chat(client, client2):
-    client.send(f"--------one-to-one initiated with [{clients[client2][0]}]--------\n".encode())
+    # Clear the screen for both clients
+    client.send("\033c".encode())
+    client2.send("\033c".encode())
+    message = "--------one-to-one initiated with [" + Fore.GREEN + f"{clients[client2][0]}" + Style.RESET_ALL + "]--------\n"
+    client.send(message.encode())
+    message = "--------one-to-one initiated with [" + Fore.GREEN + f"{clients[client][0]}" + Style.RESET_ALL + "]--------\n"
+    client2.send(message.encode())
+    message = f"You can exit at any time by typing" + Fore.RED + " /exit" + Style.RESET_ALL + "\n"
+    client.send(message.encode())
+    message = f"You can exit at any time by typing" + Fore.RED + " /exit" + Style.RESET_ALL + "\n"
+    client2.send(message.encode())
+
 
     while True and (client in one_to_one) and (client2 in one_to_one):
         try:
@@ -87,7 +100,8 @@ def one_2_one_chat(client, client2):
                 return
             else:
                 if client2 in one_to_one and client in one_to_one:
-                    client2.send(f"{clients[client][0]}: {chat_message}".encode())
+                    message = Fore.MAGENTA + f"{clients[client][0]}" + Style.RESET_ALL + f": {chat_message}"
+                    client2.send(message.encode())
         except ConnectionResetError:
             # Handle client disconnection gracefully
             if client2 in one_to_one and client in one_to_one:
@@ -104,22 +118,24 @@ def one_2_one_chat(client, client2):
             return
 
 
-#------------------------------------------------------------------------------------------------------------#
+# ------------------------------------------------------------------------------------------------------------#
 def one_to_one_request(client):
     while True:
         try:
-            client.send("Please enter a Username of an online client You want to chat with or '/exit' to return to menu\n".encode())
+            message = (Fore.YELLOW + "Please enter the nickname of an online client you want to chat with or '" +
+                       Style.RESET_ALL + Fore.RED + "/exit" + Style.RESET_ALL + Fore.YELLOW + "' to return to menu\n")
+            client.send(message.encode())
             respond = client.recv(1024).decode()
 
-            # check if this username exists in the database or not
+            # check if this nickname exists in the database or not
             does_exist = is_unique(respond)
             # user is in the database
             if does_exist:
-
-                username, flag, client2 = is_online(client, respond)
+                nickname, flag, client2 = is_online(client, respond)
                 # user is not online
-                if flag == False:
-                    client.send("user is not online!\n".encode())
+                if flag is False:
+                    message = Fore.RED + "User is not online!\n" + Style.RESET_ALL
+                    client.send(message.encode())
                     continue
                 # user is online
                 else:
@@ -127,72 +143,81 @@ def one_to_one_request(client):
                     client.send("Remaining Time:\n".encode())
                     while count:
                         client.send(f"{count}\t".encode())
-                        count = count - 1
+                        count -= 1
                         time.sleep(1)
                         if ((one_to_one[client] == client2) and (client2 in one_to_one)):
                             if one_to_one[client2] == client:
                                 one_2_one_chat(client, client2)
                                 return
                     if count == 0:
-                        client.send("invitation has expired!\n".encode())
+                        message = Fore.RED + "Invitation has expired!\n" + Style.RESET_ALL
+                        client.send(message.encode())
                         del one_to_one[client]
 
             elif respond == "/exit":
                 return
             else:
-                 client.send("This username does not exist\n".encode())
+                client.send("This nickname does not exist\n".encode())
         except ConnectionResetError:
             # Handle client disconnection gracefully
-            print(f"Client {clients[client][0]} disconnected from the chat.")
+            if client in clients:
+                print(f"Client {clients[client][0]} disconnected from the chat.")
             if client in one_to_one:
                 del one_to_one[client]
             return
-         
 
-#------------------------------------------------------------------------------------------------------------#
-    
+
+# ------------------------------------------------------------------------------------------------------------#
+
 
 def join_chat_room(client, room_name):
     # if no room name is passed as an argument the user is asked to provide the room name.
     if room_name == '':
-        client.send("Enter the name of the chat room you want to join: \n".encode())
+        message = Fore.YELLOW + "Enter the name of the chat room you want to join: \n" + Style.RESET_ALL
+        client.send(message.encode())
         room_name = client.recv(1024).decode()
 
     # room is check to already exist.
     if room_name in chat_rooms:
         # client is appended to the members list
         chat_rooms[room_name].append(client)
-        client.send(f"Type [/exit] if you want to exit the chat room at any Time!\n".encode())
+        message = "Type [" + Fore.RED + "/exit" + Style.RESET_ALL + "] if you want to exit the chat room at any Time!\n"
+        client.send(message.encode())
         client.send(f"Happy Chatting :)\n".encode())
 
-        broadcast_chatroom(client,f"has joined the chat!\n", room_name) #loon a5dar
+        broadcast_chatroom(client, f"has joined the chat!\n", room_name)  # loon a5dar
 
         while True:
             chat_message = client.recv(1024).decode()
 
             if chat_message == '/exit':
-                client.send(f"You exited chatroom: {room_name}".encode())
-                broadcast_chatroom(client,f"has exited the chat room!\n", room_name) #loon a7mar
+                message = "You exited the chatroom " + Fore.RED + f"{room_name}" + Style.RESET_ALL
+                client.send(message.encode())
+                broadcast_chatroom(client, f"has exited the chat room!\n", room_name)  # loon a7mar
                 chat_rooms[room_name].remove(client)
                 delete_chatroom(room_name)
                 break
             else:
-                broadcast_chatroom(client,f"{chat_message}", room_name)
+                broadcast_chatroom(client, f"{chat_message}", room_name)
     else:
-        client.send(f"Chat room '{room_name}' does not exist. Create the room or choose another.\n".encode())
+        message = "Chat room " + Fore.RED + f"{room_name}" + Style.RESET_ALL + " does not exist. Create the room or choose another.\n"
+        client.send(message.encode())
 
-#------------------------------------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------------------------------------
 def show_available_chat_rooms(client):
-
-    #checking if the chat Room dictionary is empty or not 
-    if len(chat_rooms): 
+    # checking if the chat Room dictionary is empty or not
+    if len(chat_rooms):
         client.send("Available Chat Rooms:\n".encode())
         # print list of all chat rooms
         for room in chat_rooms:
-            client.send(f"{room}\n".encode())
+            message = Fore.GREEN + f"{room}" + Style.RESET_ALL + "\n"
+            client.send(message.encode())
 
         # user is prompted to enter a chat room in list. (if desired)
-        client.send("Enter the name of the Chat Room you want to join or type [/back] to go back: \n".encode())
+        message = (Fore.YELLOW + "Enter the name of the Chat Room you want to join or type [" + Style.RESET_ALL
+        + Fore.RED + "/back" + Style.RESET_ALL + Fore.YELLOW + "] to go back: \n" + Style.RESET_ALL)
+        client.send(message.encode())
         room_choice = client.recv(1024).decode()
         while True:
 
@@ -203,52 +228,63 @@ def show_available_chat_rooms(client):
                 # dont forget that I will return from the "join_chat_room" fucntion if the client exited from the function
                 return
             else:
-                client.send(f"Invalid chat room choice. OR invalid Command.\n".encode())
-                client.send("Enter the name of the Chat Room you want to join or type [/back] to go back:\n ".encode())
+                message = Fore.RED + "Invalid chat room choice. OR invalid Command.\n" + Style.RESET_ALL
+                client.send(message.encode())
+                message = (Fore.YELLOW + "Enter the name of the chat room you want to join or type [" + Style.RESET_ALL + Fore.GREEN + "/back"
+                + Style.RESET_ALL + Fore.YELLOW + "] to go back:\n" + Style.RESET_ALL)
+                client.send(message.encode())
                 room_choice = client.recv(1024).decode()
 
-    else :  #in case there is no chat Rooms
-        
-        client.send("There is No Available chat Rooms :( \n".encode())
-        client.send("type [/back] to go back\n".encode())
-        respond=client.recv(1024).decode()
+    else:  # in case there is no chat Rooms
+        message = Fore.RED + "There is No Available chat Rooms :( \n" + Style.RESET_ALL
+        client.send(message.encode())
+        message = Fore.YELLOW + "Type [" + Style.RESET_ALL + Fore.RED + "/back" + Style.RESET_ALL + Fore.YELLOW + "] to go back\n" + Style.RESET_ALL
+        client.send("Type [/back] to go back\n".encode())
+        respond = client.recv(1024).decode()
         while True:
-            if respond=="/back":
+            if respond == "/back":
                 return
             else:
-                client.send(f"Invalid Command,Please Enter A valid command\n".encode())
-                respond=client.recv(1024).decode()
-                
+                message = Fore.RED + "Invalid Command,Please Enter A valid command\n" + Style.RESET_ALL
+                client.send(message.encode())
+                respond = client.recv(1024).decode()
 
 
-#------------------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 # Delete a chatroom
 def delete_chatroom(room_name):
     # chatroom is deleted if number of members reaches zero.
     if room_name in chat_rooms and len(chat_rooms[room_name]) == 0:
         del chat_rooms[room_name]
-        print(f"Chat room '{room_name}' has been deleted.")
+        message = "Chat room" + Fore.RED + f'{room_name}' + Style.RESET_ALL + " has been deleted!\n"
+        print(message)
+
+
 # ------------------------------------------------------------------------------------------------------------
 
 
-
-#------------------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 def change_nickname(client, nickname):
     # send a prompt to the client to enter his new nickname
-    client.send("Enter new nickname: ".encode())
+    message = Fore.YELLOW + "Enter new nickname: \n" + Style.RESET_ALL
+    client.send(message.encode())
     # received response from the client
     new_nickname = client.recv(1024).decode()
     # updated the client's nickname
     clients[client][1] = new_nickname
     # printed the new nickname in the server log
-    print(f'Nickname of the client {nickname} is now changed to {new_nickname}!\n')
+    message = "Nickname of the client " + Fore.YELLOW + f'{nickname}' + Style.RESET_ALL + " is now changed to " + Fore.GREEN + f'{new_nickname}' + Style.RESET_ALL
+    print(message)
     # notified all clients of the new nickname
-    broadcast(f'[{nickname}] is now called as "{new_nickname}"\n'.encode('ascii'))
+    message = Fore.YELLOW + f'{nickname}' + Style.RESET_ALL + " is now called " + Fore.GREEN + f'{new_nickname}' + Style.RESET_ALL
+    broadcast(message)
     # notified the client that his nickname has been successfully updated
-    client.send(f'Nickname successfully changed to {new_nickname}!\n'.encode('ascii'))
+    message = "Nickname successfully changed to " + Fore.YELLOW + f'{new_nickname}' + Style.RESET_ALL + " !\n"
+    client.send(message.encode('ascii'))
     return
 
-#------------------------------------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------------------------------------
 # def close_app():  #!!!!!!!! add if statement to to remove if existed client in list
 #     # if a user enters "close!" the flag 'exit flag' is sent to client-side.
 #     try:
@@ -258,31 +294,42 @@ def change_nickname(client, nickname):
 #         sys.exit(0)
 #     except:
 #         pass
-#------------------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 def Logout(client):
     # Broadcast the user's logout to other clients
-    broadcast(f'{clients[client][1]} is now offline!\n'.encode('ascii'))
+    message = Fore.RED + f'{clients[client][1]}' + Style.RESET_ALL + " is now offline!\n"
+    broadcast(message)
     # Update server log
-    print(f"User {clients[client][0]} logged out.\n")
+    message = "User " + Fore.RED + f"{clients[client][0]}" + Style.RESET_ALL + " logged out.\n"
+    print(message)
 
     # Remove the client from the clients dictionary
     del clients[client]
 
-#------------------------------------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------------------------------------
 
 def Show_Menue(client):
     while True:
 
         # client.send(str(Fore.WHITE+"Welcome To the Local P2P Chatting Application\n").encode())
         client.send(f"Welcome '{clients[client][1]}'To the Local P2P Chatting Application\n".encode())
-        client.send("1- Press [1] To See Online Users\n".encode())
-        client.send("2- Press [2] To create Chat Room\n".encode())
-        client.send("3- Press [3] To Join Chat Room\n".encode())
-        client.send("4- Press [4] To See Available ChatRooms\n".encode())
-        client.send("5- Press [5] To initiate one-to-one chatting Room\n".encode())
-        client.send("6- Press [6] To Change your Nickname \n".encode())
-        client.send("7- Press [7] To logout\n".encode())
-        client.send("8- Type [/close!] at any time To Close The application\n".encode())
+        message = "1- Press [" + Fore.YELLOW + "1" + Style.RESET_ALL + "] To " + Fore.GREEN + "See Online Users\n" + Style.RESET_ALL
+        client.send(message.encode())
+        message = "2- Press [" + Fore.YELLOW + "2" + Style.RESET_ALL + "] To " + Fore.GREEN + "create Chat Room\n" + Style.RESET_ALL
+        client.send(message.encode())
+        message = "3- Press [" + Fore.YELLOW + "3" + Style.RESET_ALL + "] To " + Fore.GREEN + "Join Chat Room\n" + Style.RESET_ALL
+        client.send(message.encode())
+        message = "4- Press [" + Fore.YELLOW + "4" + Style.RESET_ALL + "] To " + Fore.GREEN + "see Available ChatRooms\n" + Style.RESET_ALL
+        client.send(message.encode())
+        message = "5- Press [" + Fore.YELLOW + "5" + Style.RESET_ALL + "] To " + Fore.GREEN + "initiate one-to-one chatting Room\n" + Style.RESET_ALL
+        client.send(message.encode())
+        message = "6- Press [" + Fore.YELLOW + "6" + Style.RESET_ALL + "] To " + Fore.GREEN + "Change your Nickname\n" +Style.RESET_ALL
+        client.send(message.encode())
+        message = "7- Press [" + Fore.YELLOW + "7" + Style.RESET_ALL + "] To " + Fore.RED + "logout\n" + Style.RESET_ALL
+        client.send(message.encode())
+        message = "8- Press [" + Fore.YELLOW + "8" + Style.RESET_ALL + "] at any time To " + Fore.RED + "Close The application\n" + Style.RESET_ALL
+        client.send(message.encode())
 
         Respond = client.recv(1024).decode()
 
@@ -303,14 +350,19 @@ def Show_Menue(client):
             break
         else:
             client.send("Invalid command Please enter a valid command\n".encode())
-#------------------------------------------------------------------------------------------------------------
+
+
+# ------------------------------------------------------------------------------------------------------------
 
 def show_Online(client):
     client.send("Online Users:\n".encode())
     for key in clients:
-        client.send(f"(({clients[key][0]})) AKA '{clients[key][1]}'\n".encode())
-    client.send("\n1-Enter [R] to return to the Menue \n".encode())
-    client.send("\n2-Enter [/Close!] to Close the Application \n".encode())
+        message = Fore.CYAN + f"{clients[key][0]}" + Style.RESET_ALL + " AKA '" + Fore.GREEN + f"{clients[key[1]]}" + Style.RESET_ALL
+        client.send(message.encode())
+    message = "\n1-Enter [" + Fore.YELLOW + "R" + Style.RESET_ALL + "] to" + Fore.GREEN + " return to the Menu" + Style.RESET_ALL
+    client.send(message.encode())
+    message = "\n2-Enter [" + Fore.RED + "/Close!" + Style.RESET_ALL + "] to" + Fore.GREEN + " Close the Application" + Style.RESET_ALL
+    client.send(message.encode())
 
     Respond = client.recv(1024).decode()
     while True:
@@ -320,46 +372,56 @@ def show_Online(client):
         elif Respond.lower() == 'Close!':
             pass
         else:
-            client.send("Please enter a valid command!\n".encode())
+            message = Fore.RED + "Please enter a valid command!\n" + Style.RESET_ALL
+            client.send(message.encode())
             Respond = client.recv(1024).decode()
 
-        
-#------------------------------------------------------------------------------------------------------------
 
-# !!!!!!!!!! handle same login username 
-def Login_or_register(client): 
-    # client.send(str(Fore.WHITE+"Welecome To the Local P2P Chatting Application\n").encode())
+# ------------------------------------------------------------------------------------------------------------
+
+# !!!!!!!!!! handle same login username
+def Login_or_register(client):
+    # client.send(str(Fore.WHITE+"Welcome To the Local P2P Chatting Application\n").encode())
     client.send("Welcome To the Local P2P Chatting Application\n".encode())
-    client.send("1- Enter [login] to login\n".encode())
-    client.send("2- Enter [Register] if You are New!\n".encode())
-    client.send("3- Enter [/Close!] if You want to leave the chatting application\n".encode())
+    message = "1- Enter [" + Fore.GREEN + "login" + Style.RESET_ALL + "] to login\n"
+    client.send(message.encode())
+    message = "2- Enter [" + Fore.YELLOW + "Register" + Style.RESET_ALL + "] if You are New!\n"
+    client.send(message.encode())
+    message = "3- Type [" + Fore.RED + "/Close!" + Style.RESET_ALL + "] if You want to leave the chatting application\n"
+    client.send(message.encode())
     respond = client.recv(1024).decode()
 
     while True:
         if respond.lower() == "login":
-            client.send("Username :".encode())
+            message = Fore.YELLOW + "Username :" + Style.RESET_ALL
+            client.send(message.encode())
             Username = client.recv(1024).decode()
-            client.send("Password :".encode())
+            message = Fore.YELLOW + "Password :" + Style.RESET_ALL
+            client.send(message.encode())
             Password = client.recv(1024).decode()  # Receive the password directly
 
             status = Client_authentication(Username, Password)
 
             if status:
-                client.send("Login Successful !\n".encode())
+                message = Fore.GREEN + "Login Successful !" + Style.RESET_ALL
+                client.send(message.encode())
                 # usernames.append({Username:None})
                 return Username
             else:
-                client.send("Wrong UserName or Password!\n".encode())
+                message = Fore.RED + "Wrong UserName or Password!\n" + Style.RESET_ALL
+                client.send(message.encode())
                 client.send("Choose Your Command again\n".encode())
                 respond = client.recv(1024).decode()
 
         elif respond.lower() == "register":
-            client.send("Please enter a Unique Username\n".encode())
+            message = Fore.YELLOW + "Please enter a Unique Username\n" + Style.RESET_ALL
+            client.send(message.encode())
             unique_username = client.recv(1024).decode()
             status = is_unique(unique_username)
 
             if status:
-                client.send("This Username Has been Taken.\n".encode())
+                message = Fore.RED + "This Username Has been Taken.\n" + Style.RESET_ALL
+                client.send(message.encode())
             else:
                 respond = Client_Registration(client, unique_username)
 
@@ -367,9 +429,12 @@ def Login_or_register(client):
         #     close_app()
 
         else:
-            client.send("Please enter A valid Command !\n".encode())
+            message = Fore.RED + "Please enter A valid Command !\n" + Style.RESET_ALL
+            client.send(message.encode())
             respond = client.recv(1024).decode()
-#------------------------------------------------------------------------------------------------------------
+
+
+# ------------------------------------------------------------------------------------------------------------
 
 def broadcast(message):
     # Create a list of clients to remove
@@ -377,26 +442,31 @@ def broadcast(message):
     for client in clients:
         try:
             # Try to send the message to the client
-            client.send(message)
+            client.send(message.encode())
         except ConnectionResetError:
             # Handle client disconnection gracefully
-            print(f"Client {clients[client][0]} disconnected from the chat.")
+            message = f"Client " + Fore.RED + f"{clients[client][0]}" + Style.RESET_ALL + " disconnected from the chat!"
+            print(message)
             to_remove.append(client)
 
     # Remove disconnected clients from the clients dictionary
     for client in to_remove:
         del clients[client]
 
-#------------------------------------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------------------------------------
 # Broadcasts a message to all members of a specific chat room.
-def broadcast_chatroom(client,message, room_name):
+def broadcast_chatroom(client, message, room_name):
     if room_name in chat_rooms:
         for c in chat_rooms[room_name]:
-            if c==client:
+            if c == client:
                 continue
             else:
-                c.send(f"{clients[client][1]}: {message}\n".encode())
-#------------------------------------------------------------------------------------------------------------
+                message_c = Fore.CYAN + f"{clients[client][1]}" + Style.RESET_ALL + f": {message}"
+                c.send(message_c.encode())
+
+
+# ------------------------------------------------------------------------------------------------------------
 
 # def handle(client):
 #     while True:
@@ -408,36 +478,41 @@ def broadcast_chatroom(client,message, room_name):
 
 #             print(f"Lost connection with {clients[client][1]}")
 #             broadcast(f'{clients[client][1]} is now offline!'.encode())
-           
+
 #             client.close()
 #             del clients[client]
 #             break
-#------------------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------------
 
-def Handle_Client(client,address):
+def Handle_Client(client, address):
     try:
         while True:
             try:
                 Username = Login_or_register(client)
-
-                print(f"Connected with {str(address)}")
-
-                client.send('Choose Your Nickname'.encode('ascii'))
+                message = "Connected with " + Fore.GREEN + f"{str(address)}" + Style.RESET_ALL
+                print(message)
+                message = Fore.YELLOW + "Choose your Nickname :\n" + Style.RESET_ALL
+                client.send(message.encode('ascii'))
                 nickname = client.recv(1024).decode('ascii')
                 clients[client] = [Username, nickname]
 
-                print(f'Nickname of the client is {nickname}!')
-                broadcast(f'{Username} is now online! as "{nickname}"'.encode('ascii')) #e3meli loon le username , we loon lel nickname
-                client.send('Connected to the server!\n'.encode('ascii'))
+                message = "Nickname of the client is " + Fore.GREEN + f"{nickname}" + Style.RESET_ALL
+                print(message)
+                message = Fore.YELLOW + f"{Username}" + Style.RESET_ALL + " is now online as " + Fore.GREEN + f"{nickname}" + Style.RESET_ALL
+                broadcast(message)
+                message = Fore.GREEN + "Connected to the server!\n" + Style.RESET_ALL
+                client.send(message.encode('ascii'))
 
                 Show_Menue(client)
                 # thread = threading.Thread(target=handle, args=(client,))
                 # thread.start()
             except ConnectionResetError:
-                print(f"Lost connection with  {str(address)}")
+                message = "Lost connection with " + Fore.RED + f"{str(address)}" + Style.RESET_ALL
+                print(message)
                 # client may get disconnected before saving or appending his data (login)
                 if client in clients:
-                    broadcast(f'{clients[client][0]} is now offline!'.encode())
+                    message = Fore.RED + f"{clients[client][0]}" + Style.RESET_ALL + " is now offline!"
+                    broadcast(message)
                     client.close()
                     del clients[client]
                     break
@@ -447,10 +522,11 @@ def Handle_Client(client,address):
     except KeyError:
         pass
 
-#------------------------------------------------------------------------------------------------------------
-       
+
+# ------------------------------------------------------------------------------------------------------------
+
 print("Server is listening...")
 
 while True:
     client, address = server.accept()
-    threading.Thread(target=Handle_Client,args=(client, address)).start()
+    threading.Thread(target=Handle_Client, args=(client, address)).start()

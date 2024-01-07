@@ -1,8 +1,8 @@
 import socket
 import threading
 import sys
-
-
+from colorama import Fore, Style, init
+init(convert=True)
 # Function to handle receiving messages from the server
 def receive():
     while True:
@@ -21,7 +21,7 @@ def receive():
 def write():
     while True:
         message = f"{input('')}"
-        if message.lower()=="/close!":
+        if message.lower() == "/close!":
             client.close()
             sys.exit(0)
         client.send(message.encode('ascii'))
