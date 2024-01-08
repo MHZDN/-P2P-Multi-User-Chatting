@@ -111,7 +111,7 @@ def show_Online(client):
     client.send("\n1-Enter [R] to return to the Menue \n".encode())
     client.send("\n2-Enter [Close!] to Close the Application \n".encode())
 
-    Respond=client.recv(1024).decode()
+    Respond = client.recv(1024).decode()
     while True:
 
         if Respond.lower() == 'r':
@@ -120,7 +120,7 @@ def show_Online(client):
             pass
         else:
             client.send("Please enter a valid command".encode())
-            Respond=client.recv(1024).decode()
+            Respond = client.recv(1024).decode()
 
         
 #------------------------------------------------------------------------------------------------------------
@@ -128,7 +128,7 @@ def show_Online(client):
 # !!!!!!!!!! handle same login username 
 def Login_or_register(client): 
     # client.send(str(Fore.WHITE+"Welecome To the Local P2P Chatting Application\n").encode())
-    client.send("Welecome To the Local P2P Chatting Application\n".encode())
+    client.send("Welcome To the Local P2P Chatting Application\n".encode())
     client.send("1- Enter [login] to login\n".encode())
     client.send("2- Enter [Register] if You are New!\n".encode())
     client.send("3- Enter [Close!] if You want to leave the chatting application\n".encode())
@@ -194,7 +194,7 @@ def broadcast(message):
 def Handle_Client(client,address):
     while True:
         try:
-            Username=Login_or_register(client)
+            Username = Login_or_register(client)
 
             print(f"Connected with {str(address)}")
 
@@ -228,4 +228,4 @@ print("Server is listening...")
 
 while True:
     client, address = server.accept()
-    threading.Thread(target=Handle_Client,args=(client,address)).start()
+    threading.Thread(target=Handle_Client,args=(client, address)).start()

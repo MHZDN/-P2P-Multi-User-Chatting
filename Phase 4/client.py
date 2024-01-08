@@ -1,6 +1,8 @@
 import socket
 import threading
-
+import sys
+from colorama import Fore, Style, init
+init(convert=True)
 # Function to handle receiving messages from the server
 def receive():
     while True:
@@ -10,16 +12,20 @@ def receive():
             print(message)
         except:
             # If an error occurs during message reception, print an error message
-            print("An error occurred")
-
             # Close the client socket and exit the loop
             client.close()
             break
 
+#------------------------------------------------------------------------------------------------------------
+
 def write():
     while True:
         message = f"{input('')}"
+        if message.lower() == "/close!":
+            client.close()
+            sys.exit(0)
         client.send(message.encode('ascii'))
+#------------------------------------------------------------------------------------------------------------
 
 try:
     # Create a socket object
