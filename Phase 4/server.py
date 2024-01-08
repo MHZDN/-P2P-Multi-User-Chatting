@@ -320,7 +320,7 @@ def Show_Menue(client):
         client.send(message.encode())
         message = "7- Press [" + Fore.YELLOW + "7" + Style.RESET_ALL + "] To " + Fore.RED + "logout\n" + Style.RESET_ALL
         client.send(message.encode())
-        message = "8- Press [" + Fore.YELLOW + "8" + Style.RESET_ALL + "] at any time To " + Fore.RED + "Close The application\n" + Style.RESET_ALL
+        message = "8- Type [" + Fore.RED + "/close!" + Style.RESET_ALL + "] at any time To " + Fore.RED + "Close The application\n" + Style.RESET_ALL
         client.send(message.encode())
 
         Respond = client.recv(1024).decode()
@@ -344,26 +344,30 @@ def Show_Menue(client):
             client.send("Invalid command Please enter a valid command\n".encode())
 # ------------------------------------------------------------------------------------------------------------
 def show_Online(client):
-    client.send("Online Users:\n".encode())
+    message = Fore.RESET + "Online Users:\n"
+
     for key in clients:
-        message = Fore.CYAN + f"{clients[key][0]}" + Style.RESET_ALL + " AKA '" + Fore.GREEN + f"{clients[key[1]]}" + Style.RESET_ALL
-        client.send(message.encode())
-    message = "\n1-Enter [" + Fore.YELLOW + "R" + Style.RESET_ALL + "] to" + Fore.GREEN + " return to the Menu" + Style.RESET_ALL
-    client.send(message.encode())
-    message = "\n2-Enter [" + Fore.RED + "/Close!" + Style.RESET_ALL + "] to" + Fore.GREEN + " Close the Application" + Style.RESET_ALL
-    client.send(message.encode())
+        username = clients[key][0]
+        nickname = clients[key][1]
+        online_user_info = f"{Fore.CYAN}{username}{Style.RESET_ALL} AKA '{Fore.GREEN}{nickname}{Style.RESET_ALL}'\n"
+        message += online_user_info
 
-    Respond = client.recv(1024).decode()
+    message += "1- Enter [" + Fore.YELLOW + "R" + Style.RESET_ALL + "] to return to the Menu\n" \
+                                                                    "2- Enter [" + Fore.RED + "/Close!" + Style.RESET_ALL + "] to Close the Application\n"
+
+    client.send(message.encode())
+    respond = client.recv(1024).decode().lower()
+
     while True:
-
-        if Respond.lower() == 'r':
+        if respond == 'r':
             return
-        elif Respond.lower() == 'Close!':
-            pass
+        elif respond == '/close!':
+            Logout(client)
+            return
         else:
-            message = Fore.RED + "Please enter a valid command!\n" + Style.RESET_ALL
+            message = "Please enter a valid command!\n"
             client.send(message.encode())
-            Respond = client.recv(1024).decode()
+            respond = client.recv(1024).decode().lower()
 
 # ------------------------------------------------------------------------------------------------------------
 # !!!!!!!!!! handle same login username
@@ -470,7 +474,6 @@ def broadcast_chatroom(client, message, room_name):
 #             del clients[client]
 #             break
 # ------------------------------------------------------------------------------------------------------------
-
 def Handle_Client(client, address):
     try:
         while True:
